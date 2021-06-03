@@ -2,6 +2,8 @@ import java.util.ArrayList;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import javax.swing.*;
+import javax.imageio.ImageIO;
+import java.io.*;
 
 // Luc Capaldi
 // Last Edited: June 3, 2021
@@ -16,7 +18,7 @@ import javax.swing.*;
 
 public class Mandelbrot
 {
-    public static void main(String[] args)
+    public static void main(String[] args) throws IOException
     {
         // Create Mandelbrot set object with default settings
         Mandelbrot2d set = new Mandelbrot2d();
@@ -52,5 +54,9 @@ public class Mandelbrot
         frame.pack();
         frame.setVisible(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // Save image to file
+        File outfile = new File("example.png");
+        ImageIO.write(image, "png", outfile);
     }
 }

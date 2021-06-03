@@ -24,7 +24,7 @@ public class Mandelbrot2d
         screenDims = new int[]{1920, 1080}; // width x height @ 16/9 aspect ratio
         nMax = 1000; // max number of Mandelbrot iterations
 
-        xScale = new double[]{-2, 2};
+        xScale = new double[]{-2.5, 1};
         yScale = new double[]{-1, 1};
     }
 
