@@ -15,6 +15,7 @@ import java.io.*;
 //  - Ability to zoom in real time
 //  - Add color mapping (maybe in class?)
 //  - Config file
+//  - Add generics to interpolation functions
 
 public class Mandelbrot
 {

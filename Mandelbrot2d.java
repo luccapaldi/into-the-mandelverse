@@ -10,10 +10,12 @@ import java.awt.Color;
 public class Mandelbrot2d 
 {
     // Instance variables
-    private int[] screenDims;
-    private double[] xScale;
-    private double[] yScale;
-    private int nMax;           // max number of Mandelbrot iterations
+    private int[] screenDims;   // screen dimensions
+    private int[] screenDimsX;  // screen width
+    private int[] screenDimsY;  // screen height
+    private double[] xScale;       // x-scale of Mandelbrot plot
+    private double[] yScale;       // y-scale of Mandelbrot plot
+    private int nMax;              // max number of Mandelbrot iterations
 
     // Constructors:
     /**
@@ -21,13 +23,15 @@ public class Mandelbrot2d
     */
     public Mandelbrot2d()
     {
-        screenDims = new int[]{1920, 1080}; // width x height @ 16/9 aspect ratio
-        nMax = 1000; // max number of Mandelbrot iterations
-
+        screenDimsX = new int[]{0, 1920}; 
+        screenDimsY = new int[]{0, 1080};
+        screenDims = new int[]{screenDimsX[1], screenDimsY[1]};
         xScale = new double[]{-2.5, 1};
         yScale = new double[]{-1, 1};
+        nMax = 1000;
     }
 
+    // Methods
     // Accessors:
     /**
      * Return the screen dimensions as an integer array
@@ -37,8 +41,6 @@ public class Mandelbrot2d
     {
         return screenDims;
     }
-
-    // Methods
    
     /**
      * Computes image of Mandelbrot set
@@ -46,19 +48,19 @@ public class Mandelbrot2d
      */
     public ArrayList<Color> computeImage()
     {
-        // Declare array list of RGB objects
+        // Declare array list of RGB objects and create map object
         ArrayList<Color> imageRGB = new ArrayList<Color>();
+        ColorMap map = new ColorMap();
 
         // Iterate through all pixels
-        for (int i = 0; i < screenDims[0]; i++)
+        for (int i = 0; i < screenDimsX[1]; i++)
         {
-            for (int j = 0; j < screenDims[1]; j++)
+            for (int j = 0; j < screenDimsY[1]; j++)
             {
                 // Color according to number of iterations before escaping
                 int[] pixel = new int[]{i, j};
-
                 int numIterations = computePixel(pixel);
-                Color color = colorMap(pixel, numIterations);
+                Color color = map.pickColor(pixel, numIterations);
                 imageRGB.add(color);
             }
         }
@@ -70,7 +72,7 @@ public class Mandelbrot2d
      * Cubically interpolate color based on pixel input from control points 
      * @param n number of Mandelbrot iterations before escaping set 
      * @param pixel integer array containing pixel coordinates
-     * @return rgb RGB object of output color 
+     * @return rgb color object containing output color 
      */
     public Color colorMap(int[] pixel, int n)
     {
@@ -105,8 +107,11 @@ public class Mandelbrot2d
 
      int n = 0;
     
-     // Scale pixels
-     double[] pixelScaled = scalePixel(pixel, xScale, yScale);
+     // Scale pixels via linear interpolation
+     double[] pixelScaled;
+     double iScaled = linInterp(screenDimsX, xScale, (double)pixel[0]);
+     double jScaled = linInterp(screenDimsY, yScale, (double)pixel[1]);
+     pixelScaled = new double[]{iScaled, jScaled};
 
      // Compute number of iterations
      while ((x2 + y2 <= 4) && (n < nMax))
@@ -120,24 +125,40 @@ public class Mandelbrot2d
      return n;
     }
 
+    ///**
+    // * Scale input pixel to fit desired plotting dimensions using linear interpolation
+    // * @param pixel integer array containing original pixel coordinates
+    // * @param xScale desired plotting scale along x-dimension 
+    // * @param yScale desired plotting scale along y-dimension 
+    // * @return pixelScaled double array containing scaled pixel coordinates 
+    // */
+    //public double[] scalePixel(int[] pixel, double[] xScale, double[] yScale)
+    //{
+    //    double[] pixelScaled;
+
+    //    
+
+    //    // Perform linear interpolation
+    //    double iScaled = (xScale[0] + (pixel[0] - 0) * ((double)(xScale[1] - xScale[0]) / (screenDims[0] - 0)));
+    //    double jScaled = yScale[0] + (pixel[1] - 0) * ((double)(yScale[1] - yScale[0]) / (screenDims[1] - 0));
+
+    //    // Return result
+    //    pixelScaled = new double[]{iScaled, jScaled};
+    //    return pixelScaled;
+    //}
+
     /**
-     * Scale input pixel to fit desired plotting dimensions using linear interpolation
-     * @param pixel integer array containing original pixel coordinates
-     * @param xScale desired plotting scale along x-dimension 
-     * @param yScale desired plotting scale along y-dimension 
-     * @return pixelScaled double array containing scaled pixel coordinates 
+     * Performs a linear interpolation based on the input values 
+     * @param xRange interpolation range along x-direction
+     * @param yRange interpolation range along y-direction
+     * @param x position along x-direction
+     * @return y postition along y-direction
      */
-    public double[] scalePixel(int[] pixel, double[] xScale, double[] yScale)
+    public static double linInterp(int[] xRange, double[] yRange, double x)
     {
-        double[] pixelScaled;
-
-        // Perform linear interpolation
-        double iScaled = (xScale[0] + (pixel[0] - 0) * ((double)(xScale[1] - xScale[0]) / (screenDims[0] - 0)));
-        double jScaled = yScale[0] + (pixel[1] - 0) * ((double)(yScale[1] - yScale[0]) / (screenDims[1] - 0));
-
-        // Return result
-        pixelScaled = new double[]{iScaled, jScaled};
-        return pixelScaled;
+        double y;
+        y = (yRange[0] + (x - xRange[0]) * ((double)(yRange[1] - yRange[0]) / (xRange[1] - xRange[0])));
+        return y;
     }
 }
 
