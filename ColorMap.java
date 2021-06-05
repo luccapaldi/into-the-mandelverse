@@ -8,18 +8,29 @@ import java.awt.Color;
 public class ColorMap
 {
     // Instance variables
-    int[] xRange;               // screen dimensions (width by height) 
-    double[] yRange;            // bounding range for cubic interp of colors
-    ArrayList<int[]> colorMap;  // array list containing control point colors
+    int nMax;                      // max number of Mandelbrot iterations
+    double[] screenDims;           // screen dimensions (width by height) 
+    double[] screenMagRange;       // range of screen magnitudes
+    double[] lerpRange;            // bounding range for color lerp
+    double[] nRange;               // range of values for Mandelbrot iterations
+    ArrayList<int[]> colorMap;     // array list containing control point colors
 
     /**
      * Default constructor
      */
-    public ColorMap()
+    public ColorMap(int iterationsMax)
     {
-        this.xRange = new int[]{1920, 1080};
-        this.yRange = new double[]{0, 1};
+        nMax = iterationsMax;
+        this.nRange = new double[]{0, (double)nMax};
+        this.screenDims = new double[]{1920, 1080};
+        this.lerpRange = new double[]{0, 1};
 
+        // Input pixel coords are pre-scaled form [0, 1), so mag range is known       
+        this.screenMagRange = new double[]{0, (Math.sqrt(Math.pow(screenDims[0], 2) + Math.pow(screenDims[1], 2)))};
+
+
+        // Hard-coded control points
+        // See: https://stackoverflow.com/questions/16500656/which-color-gradient-is-used-to-color-mandelbrot-in-wikipedia
         colorMap = new ArrayList<int[]>();
         colorMap.add(new int[]{0, 7, 100});
         colorMap.add(new int[]{32, 107, 203});
@@ -28,70 +39,61 @@ public class ColorMap
         colorMap.add(new int[]{0, 2, 0});
     }
 
-    ///**
-    // * Constructor that accepts screen dimensions
-    // */
-    //public ColorMap(int[] screenDims)
-    //{
-    //    int[] xRange = new int[]{0, 1};
-    //    double[] yRange = new double[]{screenDims[0], screenDims[1]}; 
-    //}
-
     // Methods
-    
     /**
-     * Pick appropriate color for scaled coordinates via cubic interpolation between control points
-     * @param pixel integer array containing pixel coordinates scaled between [0, 1)
+     * Pick appropriate color for scaled coordinates via linear interpolation between control points
+     * @param pixel integer array containing unmodified pixel coordinates
      * @param n number of Mandelbrot iterations before escaping set 
+     * @param nMax maximum number of Mandelbrot iterations
      * @return c color object containing output color 
      */
     public Color pickColor(int[] pixel, int n)
     {
-        // See: https://stackoverflow.com/questions/16500656/which-color-gradient-is-used-to-color-mandelbrot-in-wikipedia
         int[] c0;  // starting point of interpolation
         int[] c1;  // ending point of interpolation
-        double[] magRange; // range for interpolation of pixel ragnitude
 
-        // Compute magnitude of pixel vector and scale between [0,1) via lerp
-        int mag = (int)Math.sqrt(Math.pow(pixel[0], 2) + Math.pow(pixel[1], 2));
-        double magScaled = Mandelbrot2d.linInterp(xRange, yRange, mag);
+        // Scale n to range between [0, 1)
+        double nScaled = linInterp(nRange, lerpRange, n);
+
+        // Store lerp range based on pixel vector magnitude 
+        double[] iRange; 
 
         // Find correct interpolation points based on range
-        if (magScaled <= 0.16)
+        if (nScaled <= 0.16)
         { 
-            magRange = new double[]{0.0, 0.16};
+            iRange = new double[]{0.0, 0.16};
             c0 = colorMap.get(0);
             c1 = colorMap.get(1);
         }
-        else if (magScaled > 0.16 && magScaled <= 0.42)
+        else if (nScaled > 0.16 && nScaled <= 0.42)
         {
-            magRange = new double[]{0.161, 0.42};
+            iRange = new double[]{0.161, 0.42};
             c0 = colorMap.get(1);
             c1 = colorMap.get(2);
         }
-        else if (magScaled > 0.42 && magScaled <= 0.6425)
+        else if (nScaled > 0.42 && nScaled <= 0.6425)
         {
-            magRange = new double[]{0.421, 0.6425};
+            iRange = new double[]{0.421, 0.6425};
             c0 = colorMap.get(2);
             c1 = colorMap.get(3);
         }
-        else if (magScaled > 0.6425 && magScaled <= 0.8575)
+        else if (nScaled > 0.6425 && nScaled <= 0.8575)
         {
-            magRange = new double[]{0.64251, 0.8575};
+            iRange = new double[]{0.64251, 0.8575};
             c0 = colorMap.get(3);
             c1 = colorMap.get(4);
         }
         else
         {
-            magRange = new double[]{0.85751, 1.0};
+            iRange = new double[]{0.85751, 1.0};
             c0 = colorMap.get(4);
             c1 = colorMap.get(0);
         }
 
         // Calculate RGB values via linear interpolation
-        double r = linInterp(magRange, new int[]{c0[0], c1[0]}, magScaled);
-        double g = linInterp(magRange, new int[]{c0[1], c1[1]}, magScaled);
-        double b = linInterp(magRange, new int[]{c0[2], c1[2]}, magScaled);
+        double r = linInterp(lerpRange, new double[]{c0[0], c1[0]}, nScaled);
+        double g = linInterp(lerpRange, new double[]{c0[1], c1[1]}, nScaled);
+        double b = linInterp(lerpRange, new double[]{c0[2], c1[2]}, nScaled);
         Color c = new Color((int)r, (int)g, (int)b);
         return c;
     }
@@ -103,7 +105,7 @@ public class ColorMap
      * @param x position along x-direction
      * @return y postition along y-direction
      */
-    public static double linInterp(double[] xRange, int[] yRange, double x)
+    public static double linInterp(double[] xRange, double[] yRange, double x)
     {
         double y = (yRange[0] + (x - xRange[0]) * ((yRange[1] - yRange[0]) / (xRange[1] - xRange[0])));
         return y;

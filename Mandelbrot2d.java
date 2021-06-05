@@ -50,17 +50,23 @@ public class Mandelbrot2d
     {
         // Declare array list of RGB objects and create map object
         ArrayList<Color> imageRGB = new ArrayList<Color>();
-        ColorMap map = new ColorMap();
+        ColorMap map = new ColorMap(nMax);
 
         // Iterate through all pixels
-        for (int i = 0; i < screenDimsX[1]; i++)
+        for (int i = 1; i <= screenDimsX[1]; i++)
         {
-            for (int j = 0; j < screenDimsY[1]; j++)
+            for (int j = 1; j <= screenDimsY[1]; j++)
             {
-                // Color according to number of iterations before escaping
+                // Compute number of iterations for pixel
                 int[] pixel = new int[]{i, j};
                 int numIterations = computePixel(pixel);
-                Color color = map.pickColor(pixel, numIterations);
+                Color color;
+
+                // If max iterations exceeded, color black
+                if (numIterations == nMax)
+                    color = new Color(0, 0, 0);
+                else
+                    color = map.pickColor(pixel, numIterations);
                 imageRGB.add(color);
             }
         }
